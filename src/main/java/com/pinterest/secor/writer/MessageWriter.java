@@ -22,6 +22,7 @@ import com.pinterest.secor.io.KeyValue;
 import com.pinterest.secor.common.SecorConfig;
 import com.pinterest.secor.message.Message;
 import com.pinterest.secor.message.ParsedMessage;
+import com.pinterest.secor.log.LogFilePath;
 
 import java.io.IOException;
 
@@ -80,8 +81,13 @@ public class MessageWriter {
         TopicPartition topicPartition = new TopicPartition(message.getTopic(),
                                                            message.getKafkaPartition());
         long offset = mOffsetTracker.getAdjustedCommittedOffsetCount(topicPartition);
-        LogFilePath path = new LogFilePath(mLocalPrefix, mConfig.getGeneration(), offset, message,
-        		mFileExtension, mConfig.getLogFilePathDelimiter());
+        LogFilePath path = mFileRegistry.createLogFilePath(mLocalPrefix,
+            message.getTopic(),
+            message.getKafkaPartition(),
+            message.getComponents(),
+            mConfig.getGeneration(),
+            offset,
+            mFileExtension);
         FileWriter writer = mFileRegistry.getOrCreateWriter(path, mCodec);
         writer.write(new KeyValue(message.getOffset(), message.getPayload()));
         LOG.debug("appended message " + message + " to file " + path.getLogFilePath() +

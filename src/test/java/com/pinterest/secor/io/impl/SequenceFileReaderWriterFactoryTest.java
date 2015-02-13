@@ -17,7 +17,7 @@
 package com.pinterest.secor.io.impl;
 
 import com.google.common.io.Files;
-import com.pinterest.secor.common.LogFilePath;
+import com.pinterest.secor.log.LogFilePath;
 import com.pinterest.secor.common.Components;
 import com.pinterest.secor.io.FileReader;
 import com.pinterest.secor.io.FileWriter;
@@ -41,12 +41,11 @@ public class SequenceFileReaderWriterFactoryTest {
         Components components = new Components(new String[] {"part-1"}, "test-topic", 0);
         LogFilePath tempLogFilePath = new LogFilePath(Files.createTempDir().toString(),
                 "test-topic",
-                components,
                 0,
+                components,
                 1,
                 0,
-                ".log",
-                "_"
+                ".log"
         );
         FileWriter fileWriter = factory.BuildFileWriter(tempLogFilePath, null);
         KeyValue kv1 = (new KeyValue(23232, new byte[]{23, 45, 40 ,10, 122}));

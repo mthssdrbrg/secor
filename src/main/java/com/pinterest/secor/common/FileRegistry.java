@@ -16,10 +16,12 @@
  */
 package com.pinterest.secor.common;
 
+import com.pinterest.secor.io.FileReaderWriterFactory;
 import com.pinterest.secor.io.FileWriter;
 import com.pinterest.secor.util.FileUtil;
 import com.pinterest.secor.util.ReflectionUtil;
 import com.pinterest.secor.util.StatsUtil;
+import com.pinterest.secor.log.LogFilePath;
 
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.slf4j.Logger;
@@ -41,12 +43,18 @@ public class FileRegistry {
     private HashMap<TopicPartition, HashSet<LogFilePath>> mFiles;
     private HashMap<LogFilePath, FileWriter> mWriters;
     private HashMap<LogFilePath, Long> mCreationTimes;
+    private FileReaderWriterFactory mFileReaderWriterFactory;
 
-    public FileRegistry(SecorConfig mConfig) {
+    public FileRegistry(SecorConfig mConfig) throws Exception {
         this.mConfig = mConfig;
-        mFiles = new HashMap<TopicPartition, HashSet<LogFilePath>>();
-        mWriters = new HashMap<LogFilePath, FileWriter>();
-        mCreationTimes = new HashMap<LogFilePath, Long>();
+        this.mFiles = new HashMap<TopicPartition, HashSet<LogFilePath>>();
+        this.mWriters = new HashMap<LogFilePath, FileWriter>();
+        this.mCreationTimes = new HashMap<LogFilePath, Long>();
+        this.mFileReaderWriterFactory = ReflectionUtil.createFileReaderWriterFactory(mConfig.getFileReaderWriterFactory());
+    }
+
+    public LogFilePath createLogFilePath(String prefix, String topic, int partition, Components components, int generation, long offset, String extension) {
+        return mFileReaderWriterFactory.BuildLogFilePath(prefix, topic, partition, components, generation, offset, extension);
     }
 
     /**
@@ -80,15 +88,14 @@ public class FileRegistry {
      * @param path The path to retrieve writer for.
      * @param codec Optional compression codec.
      * @return Writer for a given path.
-     * @throws Exception 
+     * @throws Exception
      */
     public FileWriter getOrCreateWriter(LogFilePath path, CompressionCodec codec)
             throws Exception {
         FileWriter writer = mWriters.get(path);
         if (writer == null) {
             // Just in case.
-            FileUtil.delete(path.getLogFilePath());
-            FileUtil.delete(path.getLogFileCrcPath());
+            path.delete();
             TopicPartition topicPartition = new TopicPartition(path.getTopic(),
                     path.getKafkaPartition());
             HashSet<LogFilePath> files = mFiles.get(topicPartition);
@@ -125,8 +132,7 @@ public class FileRegistry {
                                  topicPartition.getPartition());
         }
         deleteWriter(path);
-        FileUtil.delete(path.getLogFilePath());
-        FileUtil.delete(path.getLogFileCrcPath());
+        path.delete();
     }
 
     /**

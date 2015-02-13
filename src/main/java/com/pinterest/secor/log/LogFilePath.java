@@ -14,14 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.pinterest.secor.common;
+package com.pinterest.secor.log;
 
-import com.pinterest.secor.message.ParsedMessage;
 import org.apache.commons.lang.StringUtils;
+
+import com.pinterest.secor.common.Components;
+import com.pinterest.secor.util.FileUtil;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.io.IOException;
 
 /**
  * LogFilePath represents path of a log file.  It contains convenience method for building and
@@ -43,7 +46,8 @@ import java.util.Arrays;
  * @author Pawel Garbacki (pawel@pinterest.com)
  */
 public class LogFilePath {
-    private static final String DEFAULT_DELIMITER = "_";
+    protected static final String PATH_DELIMITER = "/";
+    protected static final String FILENAME_DELIMITER = "_";
     private String mPrefix;
     private String mTopic;
     private Components mComponents;
@@ -51,84 +55,16 @@ public class LogFilePath {
     private int mKafkaPartition;
     private long mOffset;
     private String mExtension;
-    private String mDelimiter;
 
-    public static LogFilePath createFromPath(String prefix, String path, String delimiter) {
-        assert path.startsWith(prefix): path + ".startsWith(" + prefix + ")";
-
-        int prefixLength = prefix.length();
-        if (!prefix.endsWith("/")) {
-            prefixLength++;
-        }
-        String suffix = path.substring(prefixLength);
-        String[] pathElements = suffix.split("/");
-        // Suffix should contain a topic, at least one partition, and the basename.
-        assert pathElements.length >= 3: Arrays.toString(pathElements) + ".length >= 3";
-
-        String topic = pathElements[0];
-        String[] pathComponents = Arrays.copyOfRange(pathElements, 1, pathElements.length - 1);
-        String extension;
-
-        // Parse basename.
-        String basename = pathElements[pathElements.length - 1];
-        // Remove extension.
-        int lastIndexOf = basename.lastIndexOf('.');
-        if (lastIndexOf >= 0) {
-            extension = basename.substring(lastIndexOf, basename.length());
-            basename = basename.substring(0, lastIndexOf);
-        } else {
-            extension = "";
-        }
-        String[] basenameElements = basename.split(delimiter);
-        assert basenameElements.length == 3: Integer.toString(basenameElements.length) + " == 3";
-        int generation = Integer.parseInt(basenameElements[0]);
-        int kafkaPartition = Integer.parseInt(basenameElements[1]);
-        long offset = Long.parseLong(basenameElements[2]);
-        Components components = new Components(pathComponents, topic, generation);
-        return new LogFilePath(prefix, topic, components, generation, kafkaPartition, offset, extension, delimiter);
-    }
-
-    public static LogFilePath createFromPath(String prefix, String path) {
-      return createFromPath(prefix, path, DEFAULT_DELIMITER);
-    }
-
-    public static String defaultOffsetFormat(long offset) {
-        return String.format("%020d", offset);
-    }
-
-    public LogFilePath(String prefix, String topic, Components components, int generation,
-                       int kafkaPartition, long offset, String extension, String delimiter) {
-        mPrefix = prefix;
-        mTopic = topic;
-        mComponents = components;
-        mGeneration = generation;
-        mKafkaPartition = kafkaPartition;
-        mOffset = offset;
-        mExtension = extension;
-        mDelimiter = delimiter;
-    }
-
-    public LogFilePath(String prefix, String topic, Components components, int generation,
-                       int kafkaPartition, long offset, String extension) {
-        this(prefix, topic, components, generation, kafkaPartition, offset, extension, DEFAULT_DELIMITER);
-    }
-
-    public LogFilePath(String prefix, int generation, long lastCommittedOffset,
-                       ParsedMessage message, String extension) {
-        this(prefix, message.getTopic(), message.getComponents(), generation,
-             message.getKafkaPartition(), lastCommittedOffset, extension, DEFAULT_DELIMITER);
-    }
-
-    public LogFilePath(String prefix, int generation, long lastCommittedOffset,
-                       ParsedMessage message, String extension, String delimiter) {
-        this(prefix, message.getTopic(), message.getComponents(), generation,
-             message.getKafkaPartition(), lastCommittedOffset, extension, delimiter);
-    }
-
-    public String getLogFileParentDir() {
-        List<String> elements = new ArrayList<String>();
-        elements.add(mPrefix);
-        return StringUtils.join(elements, "/");
+    /* TODO: add preconditions, i.e. not null checks where it makes sense */
+    public LogFilePath(String prefix, String topic, int partition, Components components, int generation, long offset, String extension) {
+        this.mPrefix = prefix; //pre
+        this.mTopic = topic; //pre
+        this.mKafkaPartition = partition;
+        this.mComponents = components; //pre
+        this.mGeneration = generation;
+        this.mOffset = offset;
+        this.mExtension = extension; //pre
     }
 
     public String getLogFileDir() {
@@ -155,6 +91,15 @@ public class LogFilePath {
         return StringUtils.join(pathElements, "/");
     }
 
+    public void delete() throws IOException {
+        FileUtil.delete(getLogFileCrcPath());
+        FileUtil.delete(getLogFilePath());
+    }
+
+    public String getPrefix() {
+        return mPrefix;
+    }
+
     public String getTopic() {
         return mTopic;
     }
@@ -177,10 +122,6 @@ public class LogFilePath {
 
     public String getExtension() {
         return mExtension;
-    }
-
-    public String getDelimiter() {
-        return mDelimiter;
     }
 
     @Override
@@ -216,13 +157,31 @@ public class LogFilePath {
         return getLogFilePath();
     }
 
-    private String getLogFileBasename() {
+    protected String getPathDelimiter() {
+        return PATH_DELIMITER;
+    }
+
+    protected String getFilenameDelimiter() {
+        return FILENAME_DELIMITER;
+    }
+
+    protected String join(List<String> strings, String delimiter) {
+        return StringUtils.join(strings, delimiter);
+    }
+
+    protected String getLogFileBasename() {
         List<String> basenameElements = new ArrayList<String>();
         for (String component : mComponents.getFilename()) {
           basenameElements.add(component);
         }
         basenameElements.add(Integer.toString(mKafkaPartition));
-        basenameElements.add(defaultOffsetFormat(mOffset));
-        return StringUtils.join(basenameElements, mDelimiter);
+        basenameElements.add(String.format("%020d", mOffset));
+        return StringUtils.join(basenameElements, getFilenameDelimiter());
+    }
+
+    protected String getLogFileParentDir() {
+        List<String> elements = new ArrayList<String>();
+        elements.add(mPrefix);
+        return StringUtils.join(elements, "/");
     }
 }

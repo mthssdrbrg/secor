@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.pinterest.secor.common;
+package com.pinterest.secor.log;
 
+import com.pinterest.secor.common.Components;
 import com.pinterest.secor.message.ParsedMessage;
+import com.pinterest.secor.util.LogFileUtil;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
@@ -47,20 +49,20 @@ public class LogFilePathTest extends TestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mComponents = new Components(PATH_PARTITIONS, TOPIC, GENERATION);
-        mLogFilePath = new LogFilePath(PREFIX, TOPIC, mComponents, GENERATION, KAFKA_PARTITION,
+        mLogFilePath = new LogFilePath(PREFIX, TOPIC, KAFKA_PARTITION, mComponents, GENERATION,
                                        LAST_COMMITTED_OFFSET, "");
     }
 
     public void testConstructFromMessage() throws Exception {
         ParsedMessage message = new ParsedMessage(TOPIC, KAFKA_PARTITION, 1000,
                                                   "some_payload".getBytes(), mComponents);
-        LogFilePath logFilePath = new LogFilePath(PREFIX, GENERATION, LAST_COMMITTED_OFFSET,
-                                                  message, "");
+        LogFilePath logFilePath = new LogFilePath(PREFIX, message.getTopic(), message.getKafkaPartition(), message.getComponents(), GENERATION,
+            LAST_COMMITTED_OFFSET, "");
         assertEquals(PATH, logFilePath.getLogFilePath());
     }
 
     public void testConstructFromPath() throws Exception {
-        LogFilePath logFilePath = LogFilePath.createFromPath("/some_parent_dir", PATH);
+        LogFilePath logFilePath = LogFileUtil.createFromPath("/some_parent_dir", PATH);
 
         assertEquals(PATH, logFilePath.getLogFilePath());
         assertEquals(TOPIC, logFilePath.getTopic());
