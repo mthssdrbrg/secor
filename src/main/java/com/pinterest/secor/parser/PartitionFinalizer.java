@@ -17,6 +17,7 @@
 package com.pinterest.secor.parser;
 
 import com.pinterest.secor.common.*;
+import com.pinterest.secor.log.LogFilePath;
 import com.pinterest.secor.message.Message;
 import com.pinterest.secor.util.CompressionUtil;
 import com.pinterest.secor.util.FileUtil;
@@ -125,8 +126,8 @@ public class PartitionFinalizer {
         String[] sPartitions = {"dt="};
         Components components = new Components(new String[]{}, topic, mConfig.getGeneration());
 
-        LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, components,
-            mConfig.getGeneration(), 0, 0, mFileExtension);
+        LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, 0, components,
+            mConfig.getGeneration(), 0, mFileExtension);
         // expects topic as part of path
         String parentDir = logFilePath.getLogFileDir();
         String[] partitionDirs = FileUtil.list(parentDir);
@@ -157,8 +158,8 @@ public class PartitionFinalizer {
             String partitionStr = format.format(partition.getTime());
             String[] pathComponents = new String[] { "dt=" + partitionStr };
             Components components = new Components(pathComponents, topic, mConfig.getGeneration());
-            LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, components,
-                mConfig.getGeneration(), 0, 0, mFileExtension);
+            LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, 0, components,
+                mConfig.getGeneration(), 0, mFileExtension);
             String logFileDir = logFilePath.getLogFileDir();
             assert FileUtil.exists(logFileDir) : "FileUtil.exists(" + logFileDir + ")";
             String successFilePath = logFileDir + "/_SUCCESS";

@@ -20,6 +20,7 @@ import com.pinterest.secor.common.*;
 import com.pinterest.secor.io.FileReader;
 import com.pinterest.secor.io.FileWriter;
 import com.pinterest.secor.io.KeyValue;
+import com.pinterest.secor.log.LogFilePath;
 import com.pinterest.secor.util.CompressionUtil;
 import com.pinterest.secor.util.FileUtil;
 import com.pinterest.secor.util.IdUtil;
@@ -66,13 +67,13 @@ public class Uploader {
 
     private Future<?> upload(LogFilePath localPath) throws Exception {
         String s3Prefix = "s3n://" + mConfig.getS3Bucket() + "/" + mConfig.getS3Path();
-        LogFilePath s3Path = new LogFilePath(s3Prefix, localPath.getTopic(),
-                                             localPath.getComponents(),
-                                             localPath.getGeneration(),
-                                             localPath.getKafkaPartition(),
-                                             localPath.getOffset(),
-                                             localPath.getExtension(),
-                                             localPath.getDelimiter());
+        LogFilePath s3Path = mFileRegistry.createLogFilePath(s3Prefix,
+            localPath.getTopic(),
+            localPath.getKafkaPartition(),
+            localPath.getComponents(),
+            localPath.getGeneration(),
+            localPath.getOffset(),
+            localPath.getExtension());
         final String localLogFilename = localPath.getLogFilePath();
         final String s3LogFilename = s3Path.getLogFilePath();
         LOG.info("uploading file " + localLogFilename + " to " + s3LogFilename);
@@ -156,11 +157,13 @@ public class Uploader {
                     if (writer == null) {
                         String localPrefix = mConfig.getLocalPath() + '/' +
                             IdUtil.getLocalMessageDir();
-                        dstPath = new LogFilePath(localPrefix, srcPath.getTopic(),
-                                                  srcPath.getComponents(), srcPath.getGeneration(),
-                                                  srcPath.getKafkaPartition(), startOffset,
-                                                  extension,
-                                                  srcPath.getDelimiter());
+                        dstPath = mFileRegistry.createLogFilePath(localPrefix,
+                            srcPath.getTopic(),
+                            srcPath.getKafkaPartition(),
+                            srcPath.getComponents(),
+                            srcPath.getGeneration(),
+                            startOffset,
+                            extension);
                         writer = mFileRegistry.getOrCreateWriter(dstPath,
                         		codec);
                     }
