@@ -17,11 +17,11 @@
 package com.pinterest.secor.parser;
 
 import com.pinterest.secor.message.Message;
-import com.pinterest.secor.message.ParsedMessage;
+import com.pinterest.secor.common.Components;
 
 /**
- * Message parser extracts partitions from messages.
+ * Message parser extracts components from messages.
  */
 public interface MessageParser {
-    public ParsedMessage parse(Message message) throws Exception;
+    public Components parse(Message message) throws Exception;
 }
