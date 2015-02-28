@@ -18,7 +18,7 @@ package com.pinterest.secor.io.impl;
 
 import com.google.common.io.Files;
 import com.pinterest.secor.common.LogFilePath;
-import com.pinterest.secor.common.Partitions;
+import com.pinterest.secor.common.Components;
 import com.pinterest.secor.io.FileReader;
 import com.pinterest.secor.io.FileWriter;
 import com.pinterest.secor.io.KeyValue;
@@ -38,11 +38,10 @@ public class SequenceFileReaderWriterFactoryTest {
     @Test
     public void testSequenceReadWriteRoundTrip() throws Exception {
         SequenceFileReaderWriterFactory factory = new SequenceFileReaderWriterFactory();
-        Partitions partitions =
-          new Partitions(Arrays.asList("test-topic", "part-1"), Arrays.asList("0"));
+        Components components = new Components(new String[] {"part-1"}, "test-topic", 0);
         LogFilePath tempLogFilePath = new LogFilePath(Files.createTempDir().toString(),
                 "test-topic",
-                partitions,
+                components,
                 0,
                 1,
                 0,

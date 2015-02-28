@@ -46,7 +46,7 @@ public class LogFilePath {
     private static final String DEFAULT_DELIMITER = "_";
     private String mPrefix;
     private String mTopic;
-    private Partitions mPartitions;
+    private Components mComponents;
     private int mGeneration;
     private int mKafkaPartition;
     private long mOffset;
@@ -66,7 +66,7 @@ public class LogFilePath {
         assert pathElements.length >= 3: Arrays.toString(pathElements) + ".length >= 3";
 
         String topic = pathElements[0];
-        List<String> pathPartitions = Arrays.asList(Arrays.copyOfRange(pathElements, 0, pathElements.length - 1));
+        String[] pathComponents = Arrays.copyOfRange(pathElements, 1, pathElements.length - 1);
         String extension;
 
         // Parse basename.
@@ -79,13 +79,13 @@ public class LogFilePath {
         } else {
             extension = "";
         }
-        List<String> basenameElements = new ArrayList<String>(Arrays.asList(basename.split(delimiter)));
-        assert basenameElements.size() == 3: Integer.toString(basenameElements.size()) + " == 3";
-        int generation = Integer.parseInt(basenameElements.get(0));
-        int kafkaPartition = Integer.parseInt(basenameElements.get(1));
-        long offset = Long.parseLong(basenameElements.get(2));
-        Partitions partitions = new Partitions(pathPartitions, basenameElements.subList(0, 1));
-        return new LogFilePath(prefix, topic, partitions, generation, kafkaPartition, offset, extension, delimiter);
+        String[] basenameElements = basename.split(delimiter);
+        assert basenameElements.length == 3: Integer.toString(basenameElements.length) + " == 3";
+        int generation = Integer.parseInt(basenameElements[0]);
+        int kafkaPartition = Integer.parseInt(basenameElements[1]);
+        long offset = Long.parseLong(basenameElements[2]);
+        Components components = new Components(pathComponents, topic, generation);
+        return new LogFilePath(prefix, topic, components, generation, kafkaPartition, offset, extension, delimiter);
     }
 
     public static LogFilePath createFromPath(String prefix, String path) {
@@ -96,11 +96,11 @@ public class LogFilePath {
         return String.format("%020d", offset);
     }
 
-    public LogFilePath(String prefix, String topic, Partitions partitions, int generation,
+    public LogFilePath(String prefix, String topic, Components components, int generation,
                        int kafkaPartition, long offset, String extension, String delimiter) {
         mPrefix = prefix;
         mTopic = topic;
-        mPartitions = partitions;
+        mComponents = components;
         mGeneration = generation;
         mKafkaPartition = kafkaPartition;
         mOffset = offset;
@@ -108,20 +108,20 @@ public class LogFilePath {
         mDelimiter = delimiter;
     }
 
-    public LogFilePath(String prefix, String topic, Partitions partitions, int generation,
+    public LogFilePath(String prefix, String topic, Components components, int generation,
                        int kafkaPartition, long offset, String extension) {
-        this(prefix, topic, partitions, generation, kafkaPartition, offset, extension, DEFAULT_DELIMITER);
+        this(prefix, topic, components, generation, kafkaPartition, offset, extension, DEFAULT_DELIMITER);
     }
 
     public LogFilePath(String prefix, int generation, long lastCommittedOffset,
                        ParsedMessage message, String extension) {
-        this(prefix, message.getTopic(), message.getPartitions(), generation,
+        this(prefix, message.getTopic(), message.getComponents(), generation,
              message.getKafkaPartition(), lastCommittedOffset, extension, DEFAULT_DELIMITER);
     }
 
     public LogFilePath(String prefix, int generation, long lastCommittedOffset,
                        ParsedMessage message, String extension, String delimiter) {
-        this(prefix, message.getTopic(), message.getPartitions(), generation,
+        this(prefix, message.getTopic(), message.getComponents(), generation,
              message.getKafkaPartition(), lastCommittedOffset, extension, delimiter);
     }
 
@@ -134,7 +134,9 @@ public class LogFilePath {
     public String getLogFileDir() {
         List<String> elements = new ArrayList<String>();
         elements.add(getLogFileParentDir());
-        elements.addAll(mPartitions.getPathPartitions());
+        for (String component : mComponents.getPath()) {
+          elements.add(component);
+        }
         return StringUtils.join(elements, "/");
     }
 
@@ -157,8 +159,8 @@ public class LogFilePath {
         return mTopic;
     }
 
-    public Partitions getPartitions() {
-        return mPartitions;
+    public Components getComponents() {
+        return mComponents;
     }
 
     public int getGeneration() {
@@ -191,7 +193,7 @@ public class LogFilePath {
         if (mGeneration != that.mGeneration) return false;
         if (mKafkaPartition != that.mKafkaPartition) return false;
         if (mOffset != that.mOffset) return false;
-        if (!mPartitions.equals(that.mPartitions)) return false;
+        if (!mComponents.equals(that.mComponents)) return false;
         if (mPrefix != null ? !mPrefix.equals(that.mPrefix) : that.mPrefix != null) return false;
         if (mTopic != null ? !mTopic.equals(that.mTopic) : that.mTopic != null) return false;
 
@@ -202,7 +204,7 @@ public class LogFilePath {
     public int hashCode() {
         int result = mPrefix != null ? mPrefix.hashCode() : 0;
         result = 31 * result + (mTopic != null ? mTopic.hashCode() : 0);
-        result = 31 * result + (mPartitions != null ? mPartitions.hashCode() : 0);
+        result = 31 * result + (mComponents != null ? mComponents.hashCode() : 0);
         result = 31 * result + mGeneration;
         result = 31 * result + mKafkaPartition;
         result = 31 * result + (int) (mOffset ^ (mOffset >>> 32));
@@ -216,7 +218,9 @@ public class LogFilePath {
 
     private String getLogFileBasename() {
         List<String> basenameElements = new ArrayList<String>();
-        basenameElements.addAll(mPartitions.getFilenamePartitions());
+        for (String component : mComponents.getFilename()) {
+          basenameElements.add(component);
+        }
         basenameElements.add(Integer.toString(mKafkaPartition));
         basenameElements.add(defaultOffsetFormat(mOffset));
         return StringUtils.join(basenameElements, mDelimiter);

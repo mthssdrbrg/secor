@@ -17,7 +17,7 @@
 package com.pinterest.secor.parser;
 
 import com.pinterest.secor.common.SecorConfig;
-import com.pinterest.secor.common.Partitions;
+import com.pinterest.secor.common.Components;
 import com.pinterest.secor.message.Message;
 import com.pinterest.secor.message.ParsedMessage;
 
@@ -43,17 +43,11 @@ public abstract class AbstractMessageParser implements MessageParser {
 
     @Override
     public ParsedMessage parse(Message message) throws Exception {
-        List<String> pathPartitions = Partitions.defaultPathPartitions(message.getTopic(),
-            extractPartitions(message));
-        List<String> filenamePartitions = Arrays.asList(extractFilenamePartitions(message));
-        Partitions partitions = new Partitions(pathPartitions, filenamePartitions);
+        Components components = new Components(extractPartitions(message), message.getTopic(),
+            mConfig.getGeneration());
         return new ParsedMessage(message.getTopic(), message.getKafkaPartition(),
-                                 message.getOffset(), message.getPayload(), partitions);
+            message.getOffset(), message.getPayload(), components);
     }
 
-    public abstract String[] extractPartitions(Message payload) throws Exception;
-
-    protected String[] extractFilenamePartitions(Message message) {
-        return Partitions.defaultFilenamePartitions(mConfig.getGeneration(), message.getKafkaPartition());
-    }
+    protected abstract String[] extractPartitions(Message payload) throws Exception;
 }

@@ -32,8 +32,7 @@ public class LogFilePathTest extends TestCase {
     private static final int GENERATION = 10;
     private static final int KAFKA_PARTITION = 0;
     private static final long LAST_COMMITTED_OFFSET = 100;
-    private static final String[] PATH_PARTITIONS = {TOPIC, "some_partition", "some_other_partition"};
-    private static final String[] NAME_PARTITIONS = Partitions.defaultFilenamePartitions(GENERATION, KAFKA_PARTITION);
+    private static final String[] PATH_PARTITIONS = {"some_partition", "some_other_partition"};
     private static final String PATH =
         "/some_parent_dir/some_topic/some_partition/some_other_partition/" +
         "10_0_00000000000000000100";
@@ -42,19 +41,19 @@ public class LogFilePathTest extends TestCase {
             ".10_0_00000000000000000100.crc";
 
     private LogFilePath mLogFilePath;
-    private Partitions mPartitions;
+    private Components mComponents;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mPartitions = new Partitions(Arrays.asList(PATH_PARTITIONS), Arrays.asList(NAME_PARTITIONS));
-        mLogFilePath = new LogFilePath(PREFIX, TOPIC, mPartitions, GENERATION, KAFKA_PARTITION,
+        mComponents = new Components(PATH_PARTITIONS, TOPIC, GENERATION);
+        mLogFilePath = new LogFilePath(PREFIX, TOPIC, mComponents, GENERATION, KAFKA_PARTITION,
                                        LAST_COMMITTED_OFFSET, "");
     }
 
     public void testConstructFromMessage() throws Exception {
         ParsedMessage message = new ParsedMessage(TOPIC, KAFKA_PARTITION, 1000,
-                                                  "some_payload".getBytes(), mPartitions);
+                                                  "some_payload".getBytes(), mComponents);
         LogFilePath logFilePath = new LogFilePath(PREFIX, GENERATION, LAST_COMMITTED_OFFSET,
                                                   message, "");
         assertEquals(PATH, logFilePath.getLogFilePath());
@@ -65,7 +64,7 @@ public class LogFilePathTest extends TestCase {
 
         assertEquals(PATH, logFilePath.getLogFilePath());
         assertEquals(TOPIC, logFilePath.getTopic());
-        assertEquals(mPartitions, logFilePath.getPartitions());
+        assertEquals(mComponents, logFilePath.getComponents());
         assertEquals(GENERATION, logFilePath.getGeneration());
         assertEquals(KAFKA_PARTITION, logFilePath.getKafkaPartition());
         assertEquals(LAST_COMMITTED_OFFSET, logFilePath.getOffset());
@@ -73,7 +72,7 @@ public class LogFilePathTest extends TestCase {
 
     public void testGetters() throws Exception {
         assertEquals(TOPIC, mLogFilePath.getTopic());
-        assertEquals(mPartitions, mLogFilePath.getPartitions());
+        assertEquals(mComponents, mLogFilePath.getComponents());
         assertEquals(GENERATION, mLogFilePath.getGeneration());
         assertEquals(KAFKA_PARTITION, mLogFilePath.getKafkaPartition());
         assertEquals(LAST_COMMITTED_OFFSET, mLogFilePath.getOffset());

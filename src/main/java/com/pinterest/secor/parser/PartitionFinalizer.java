@@ -123,11 +123,9 @@ public class PartitionFinalizer {
     private NavigableSet<Calendar> getPartitions(String topic) throws IOException, ParseException {
         final String s3Prefix = "s3n://" + mConfig.getS3Bucket() + "/" + mConfig.getS3Path();
         String[] sPartitions = {"dt="};
-        List<String> pathPartitions = new ArrayList<String>();
-        pathPartitions.add(topic);
-        Partitions partitions = new Partitions(pathPartitions, new ArrayList<String>());
+        Components components = new Components(new String[]{}, topic, mConfig.getGeneration());
 
-        LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, partitions,
+        LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, components,
             mConfig.getGeneration(), 0, 0, mFileExtension);
         // expects topic as part of path
         String parentDir = logFilePath.getLogFileDir();
@@ -157,11 +155,9 @@ public class PartitionFinalizer {
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         for (Calendar partition : partitionDates) {
             String partitionStr = format.format(partition.getTime());
-            String[] sPathPartitions = {"dt=" + partitionStr};
-            List<String> pathPartitions = new ArrayList<String>(Arrays.asList(sPathPartitions));
-            pathPartitions.add(0, topic);
-            Partitions partitions = new Partitions(pathPartitions, new ArrayList<String>());
-            LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, partitions,
+            String[] pathComponents = new String[] { "dt=" + partitionStr };
+            Components components = new Components(pathComponents, topic, mConfig.getGeneration());
+            LogFilePath logFilePath = new LogFilePath(s3Prefix, topic, components,
                 mConfig.getGeneration(), 0, 0, mFileExtension);
             String logFileDir = logFilePath.getLogFileDir();
             assert FileUtil.exists(logFileDir) : "FileUtil.exists(" + logFileDir + ")";
