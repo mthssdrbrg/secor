@@ -67,7 +67,7 @@ public class Uploader {
     private Future<?> upload(LogFilePath localPath) throws Exception {
         String s3Prefix = "s3n://" + mConfig.getS3Bucket() + "/" + mConfig.getS3Path();
         LogFilePath s3Path = new LogFilePath(s3Prefix, localPath.getTopic(),
-                                             localPath.getPartitions(),
+                                             localPath.getComponents(),
                                              localPath.getGeneration(),
                                              localPath.getKafkaPartition(),
                                              localPath.getOffset(),
@@ -157,7 +157,7 @@ public class Uploader {
                         String localPrefix = mConfig.getLocalPath() + '/' +
                             IdUtil.getLocalMessageDir();
                         dstPath = new LogFilePath(localPrefix, srcPath.getTopic(),
-                                                  srcPath.getPartitions(), srcPath.getGeneration(),
+                                                  srcPath.getComponents(), srcPath.getGeneration(),
                                                   srcPath.getKafkaPartition(), startOffset,
                                                   extension,
                                                   srcPath.getDelimiter());
