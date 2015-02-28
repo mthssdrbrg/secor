@@ -34,6 +34,12 @@ public class ParsedMessage extends Message {
                Arrays.toString(mComponents.getPath()) + "}";
     }
 
+    public ParsedMessage(Message message, Components components) {
+        super(message.getTopic(), message.getKafkaPartition(),
+              message.getOffset(), message.getPayload());
+        this.mComponents = components;
+    }
+
     public ParsedMessage(String topic, int kafkaPartition, long offset,
                          byte[] payload, Components mComponents) {
         super(topic, kafkaPartition, offset, payload);

@@ -30,7 +30,7 @@ import java.util.Arrays;
 // the one that works.  What is the performance cost of such approach?
 
 /**
- * Message parser extracts partitions from messages.
+ * Message parser extracts components from messages.
  *
  * @author Pawel Garbacki (pawel@pinterest.com)
  */
@@ -42,11 +42,9 @@ public abstract class AbstractMessageParser implements MessageParser {
     }
 
     @Override
-    public ParsedMessage parse(Message message) throws Exception {
-        Components components = new Components(extractPartitions(message), message.getTopic(),
+    public Components parse(Message message) throws Exception {
+        return new Components(extractPartitions(message), message.getTopic(),
             mConfig.getGeneration());
-        return new ParsedMessage(message.getTopic(), message.getKafkaPartition(),
-            message.getOffset(), message.getPayload(), components);
     }
 
     protected abstract String[] extractPartitions(Message payload) throws Exception;
