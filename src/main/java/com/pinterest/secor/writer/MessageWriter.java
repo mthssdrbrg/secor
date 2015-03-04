@@ -76,6 +76,7 @@ public class MessageWriter {
                       ".  Deleting files in topic " + topicPartition.getTopic() + " partition " +
                       topicPartition.getPartition());
             mFileRegistry.deleteTopicPartition(topicPartition);
+            mDeduplicator.reset(topicPartition);
         }
         mOffsetTracker.setLastSeenOffset(topicPartition, message.getOffset());
     }
@@ -83,12 +84,14 @@ public class MessageWriter {
     public void write(ParsedMessage message) throws Exception {
         TopicPartition topicPartition = new TopicPartition(message.getTopic(),
                                                            message.getKafkaPartition());
-        long offset = mOffsetTracker.getAdjustedCommittedOffsetCount(topicPartition);
-        LogFilePath path = new LogFilePath(mLocalPrefix, mConfig.getGeneration(), offset, message,
-        		mFileExtension);
-        FileWriter writer = mFileRegistry.getOrCreateWriter(path, mCodec);
-        writer.write(new KeyValue(message.getOffset(), message.getPayload()));
-        LOG.debug("appended message " + message + " to file " + path.getLogFilePath() +
-                  ".  File length " + writer.getLength());
+        if (!mDeduplicator.isPresent(topicPartition, message.getKey())) {
+            long offset = mOffsetTracker.getAdjustedCommittedOffsetCount(topicPartition);
+            LogFilePath path = new LogFilePath(mLocalPrefix, mConfig.getGeneration(), offset, message,
+                mFileExtension);
+            FileWriter writer = mFileRegistry.getOrCreateWriter(path, mCodec);
+            writer.write(new KeyValue(message.getOffset(), message.getPayload()));
+            LOG.debug("appended message " + message + " to file " + path.getLogFilePath() +
+                      ".  File length " + writer.getLength());
+        }
     }
 }
