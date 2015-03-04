@@ -22,6 +22,8 @@ import com.pinterest.secor.io.KeyValue;
 import com.pinterest.secor.common.SecorConfig;
 import com.pinterest.secor.message.Message;
 import com.pinterest.secor.message.ParsedMessage;
+import com.pinterest.secor.dedup.Deduplicator;
+import com.pinterest.secor.dedup.DeduplicatorFactory;
 
 import java.io.IOException;
 
@@ -46,6 +48,7 @@ public class MessageWriter {
     private String mFileExtension;
     private CompressionCodec mCodec;
     private String mLocalPrefix;
+    private Deduplicator mDeduplicator;
 
     public MessageWriter(SecorConfig config, OffsetTracker offsetTracker,
                          FileRegistry fileRegistry) throws Exception {
@@ -59,6 +62,7 @@ public class MessageWriter {
             mFileExtension = "";
         }
         mLocalPrefix = mConfig.getLocalPath() + '/' + IdUtil.getLocalMessageDir();
+        mDeduplicator = DeduplicatorFactory.createDeduplicator(mConfig);
     }
 
     public void adjustOffset(Message message) throws IOException {
