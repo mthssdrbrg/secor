@@ -24,6 +24,9 @@
         <maven.compiler.target>1.6</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kafka.version>0.8.2.1</kafka.version>
+        <scala.version>2.10</scala.version>
+        <jets3t.version>0.7.1</jets3t.version>
     </properties>
 
     <repositories>
@@ -51,12 +54,12 @@
         <dependency>
             <groupId>net.java.dev.jets3t</groupId>
             <artifactId>jets3t</artifactId>
-            <version>0.7.1</version>
+            <version>${jets3t.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
-            <version>0.8.1.1</version>
+            <artifactId>kafka_${scala.version}</artifactId>
+            <version>${kafka.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -121,7 +124,7 @@
         </dependency>
         <dependency>
             <groupId>com.twitter</groupId>
-            <artifactId>ostrich_2.10</artifactId>
+            <artifactId>ostrich_${scala.version}</artifactId>
             <version>9.2.1</version>
         </dependency>
         <dependency>
@@ -137,7 +140,7 @@
         <dependency>
             <groupId>net.minidev</groupId>
             <artifactId>json-smart</artifactId>
-            <version>2.0-RC3</version>
+            <version>2.1.1</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -149,6 +152,7 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <version>1.9.5</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>
@@ -181,28 +185,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.1</version>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>git</executable>
-                            <arguments>
-                                <argument>log</argument>
-                                <argument>--pretty=format:build_revision=%H</argument>
-                                <argument>-n1</argument>
-                            </arguments>
-                            <outputFile>target/build.properties</outputFile>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- This forces the dependencies to be copied to target/lib -->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -214,6 +196,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <includeScope>compile</includeScope>
                         </configuration>
                     </execution>
                 </executions>
