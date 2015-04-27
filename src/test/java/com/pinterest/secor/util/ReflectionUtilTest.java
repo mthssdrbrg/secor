@@ -16,7 +16,7 @@
  */
 package com.pinterest.secor.util;
 
-import com.pinterest.secor.common.LogFilePath;
+import com.pinterest.secor.log.LogFilePath;
 import com.pinterest.secor.common.SecorConfig;
 import com.pinterest.secor.parser.MessageParser;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -30,7 +30,7 @@ public class ReflectionUtilTest {
     public void setUp() throws Exception {
         PropertiesConfiguration properties = new PropertiesConfiguration();
         mSecorConfig = new SecorConfig(properties);
-        mLogFilePath = new LogFilePath("/foo", "/foo/bar/baz/1_1_1");
+        mLogFilePath = LogFileUtil.createFromPath("/foo", "/foo/bar/baz/1_1_1");
     }
 
     @Test

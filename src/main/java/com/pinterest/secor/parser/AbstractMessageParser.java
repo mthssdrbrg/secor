@@ -17,24 +17,35 @@
 package com.pinterest.secor.parser;
 
 import com.pinterest.secor.common.SecorConfig;
+import com.pinterest.secor.common.Components;
 import com.pinterest.secor.message.Message;
+import com.pinterest.secor.message.ParsedMessage;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+// TODO(pawel): should we offer a multi-message parser capable of parsing multiple types of
+// messages?  E.g., it could be implemented as a composite trying out different parsers and using
+// the one that works.  What is the performance cost of such approach?
 
 /**
- * Offset message parser groups messages based on the offset ranges.
+ * Message parser extracts components from messages.
  *
  * @author Pawel Garbacki (pawel@pinterest.com)
  */
-public class OffsetMessageParser extends AbstractMessageParser {
-    public OffsetMessageParser(SecorConfig config) {
-        super(config);
+public abstract class AbstractMessageParser implements MessageParser {
+    protected SecorConfig mConfig;
+
+    public AbstractMessageParser(SecorConfig config) {
+        mConfig = config;
     }
 
     @Override
-    public String[] extractPartitions(Message message) throws Exception {
-        long offset = message.getOffset();
-        long offsetsPerPartition = mConfig.getOffsetsPerPartition();
-        long partition = (offset / offsetsPerPartition) * offsetsPerPartition;
-        String[] result = {"offset=" + partition};
-        return result;
+    public Components parse(Message message) throws Exception {
+        return new Components(extractPartitions(message), message.getTopic(),
+            mConfig.getGeneration());
     }
+
+    protected abstract String[] extractPartitions(Message payload) throws Exception;
 }

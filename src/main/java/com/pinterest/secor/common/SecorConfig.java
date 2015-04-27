@@ -264,6 +264,10 @@ public class SecorConfig {
         return mProperties.getInt("secor.deduplication.limit", 1000);
     }
 
+    public String getLogFilePathDelimiter() {
+        return mProperties.getString("secor.log.file.path.delimiter", "_");
+    }
+
     private void checkProperty(String name) {
         if (!mProperties.containsKey(name)) {
             throw new RuntimeException("Failed to find required configuration option '" +
