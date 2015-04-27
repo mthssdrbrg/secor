@@ -88,6 +88,8 @@ public class UploaderTest extends TestCase {
         mConfig = Mockito.mock(SecorConfig.class);
         Mockito.when(mConfig.getLocalPath()).thenReturn("/some_parent_dir");
         Mockito.when(mConfig.getMaxFileSizeBytes()).thenReturn(10L);
+        Mockito.when(mConfig.getS3Bucket()).thenReturn("some_bucket");
+        Mockito.when(mConfig.getS3Path()).thenReturn("some_s3_parent_dir");
 
         mOffsetTracker = Mockito.mock(OffsetTracker.class);
 
@@ -118,8 +120,6 @@ public class UploaderTest extends TestCase {
         Mockito.when(
                 mOffsetTracker.getTrueCommittedOffsetCount(mTopicPartition))
                 .thenReturn(11L);
-        Mockito.when(mConfig.getS3Bucket()).thenReturn("some_bucket");
-        Mockito.when(mConfig.getS3Path()).thenReturn("some_s3_parent_dir");
 
         HashSet<LogFilePath> logFilePaths = new HashSet<LogFilePath>();
         logFilePaths.add(mLogFilePath);
