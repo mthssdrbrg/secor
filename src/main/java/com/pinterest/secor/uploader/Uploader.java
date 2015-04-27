@@ -51,6 +51,8 @@ public class Uploader {
     private FileRegistry mFileRegistry;
     private ZookeeperConnector mZookeeperConnector;
     private String mS3Prefix;
+    private long mMaxFileSizeBytes;
+    private long mMaxFileAgeSeconds;
 
     public Uploader(SecorConfig config, OffsetTracker offsetTracker, FileRegistry fileRegistry) {
         this(config, offsetTracker, fileRegistry, new ZookeeperConnector(config));
@@ -64,6 +66,8 @@ public class Uploader {
         mFileRegistry = fileRegistry;
         mZookeeperConnector = zookeeperConnector;
         mS3Prefix = constructS3Prefix();
+        mMaxFileSizeBytes = mConfig.getMaxFileSizeBytes();
+        mMaxFileAgeSeconds = mConfig.getMaxFileAgeSeconds();
     }
 
     private String constructS3Prefix() {
@@ -199,8 +203,7 @@ public class Uploader {
     private void checkTopicPartition(TopicPartition topicPartition) throws Exception {
         final long size = mFileRegistry.getSize(topicPartition);
         final long modificationAgeSec = mFileRegistry.getModificationAgeSec(topicPartition);
-        if (size >= mConfig.getMaxFileSizeBytes() ||
-                modificationAgeSec >= mConfig.getMaxFileAgeSeconds()) {
+        if (size >= mMaxFileSizeBytes || modificationAgeSec >= mMaxFileAgeSeconds) {
             long newOffsetCount = mZookeeperConnector.getCommittedOffsetCount(topicPartition);
             long oldOffsetCount = mOffsetTracker.setCommittedOffsetCount(topicPartition,
                     newOffsetCount);
